@@ -13,7 +13,6 @@ import {
   Clock,
   ChefHat,
   Users,
-  ArrowRight,
   ArrowDown,
   ArrowUp,
 } from "lucide-react";
@@ -88,12 +87,12 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         </div>
       </CardContent>
 
-      <CardFooter className="border-t p-4 flex flex-col gap-2 m-1">
-        <div className="flex justify-center w-full space-x-2">
+      <CardFooter className="border-t p-4 flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row w-full gap-2">
           <Button
             variant="outline"
             onClick={() => setExpanded(!expanded)}
-            className="hover:bg-accent"
+            className="hover:bg-accent w-full"
           >
             {expanded ? (
               <>
@@ -110,7 +109,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
           <Button
             variant="secondary"
             onClick={() => setShowChat(!showChat)}
-            // className="w-full"
+            className="w-full"
           >
             {showChat ? "Hide Recipe Assistant" : "Ask About This Recipe"}
           </Button>
