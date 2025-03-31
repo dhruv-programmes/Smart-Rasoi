@@ -145,8 +145,8 @@ export const generateRecipe = async (
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.6,
-          topK: 32,
+          temperature: 0.7, // Balanced randomness for variety
+          topK: 40, // Slightly higher for more diversity
           topP: 0.95,
           maxOutputTokens: 4096
         }

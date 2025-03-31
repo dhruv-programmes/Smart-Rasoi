@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useRestaurant } from '@/context/RestaurantContext';
 import { generateRecipe } from '@/services/api';
@@ -13,7 +12,7 @@ import RecipeCard from './RecipeCard';
 const RecipeGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipe, setRecipe] = useState<any | null>(null);
   const { restaurant } = useRestaurant();
   const { toast } = useToast();
   
@@ -28,16 +27,12 @@ const RecipeGenerator = () => {
   };
 
   const selectAllIngredients = () => {
-    if (selectedIngredients.length === ingredients.length) {
-      // If all ingredients are already selected, deselect all
-      setSelectedIngredients([]);
-    } else {
-      // Otherwise select all ingredients
-      setSelectedIngredients(ingredients.map(ingredient => ingredient.name));
-    }
+    setSelectedIngredients(
+      selectedIngredients.length === ingredients.length ? [] : ingredients.map(ing => ing.name)
+    );
   };
   
-  const handleGenerateRecipes = async () => {
+  const handleGenerateRecipe = async () => {
     if (selectedIngredients.length === 0) {
       toast({
         title: "No Ingredients Selected",
@@ -48,42 +43,28 @@ const RecipeGenerator = () => {
     }
     
     setIsGenerating(true);
-    setRecipes([]);
+    setRecipe(null);
     
     try {
-      // Generate two different recipes
-      const results = await Promise.all([
-        generateRecipe(selectedIngredients, restaurant || {
-          name: "Sample Restaurant",
-          cuisine: "Mixed Cuisine",
-          specialties: ["Various Dishes"],
-          description: "A sample restaurant for testing"
-        }),
-        generateRecipe(selectedIngredients, restaurant || {
-          name: "Sample Restaurant",
-          cuisine: "Mixed Cuisine",
-          specialties: ["Various Dishes"],
-          description: "A sample restaurant for testing"
-        })
-      ]);
+      const result = await generateRecipe(selectedIngredients, restaurant || {
+        name: "Sample Restaurant",
+        cuisine: "Mixed Cuisine",
+        specialties: ["Various Dishes"],
+        description: "A sample restaurant for testing"
+      });
       
-      const successfulRecipes = results
-        .filter(result => result.success && result.recipe.title)
-        .map(result => result.recipe);
-      
-      if (successfulRecipes.length > 0) {
-        // Save recipes to database
-        successfulRecipes.forEach(recipe => saveRecipeToDB(recipe));
-        setRecipes(successfulRecipes);
+      if (result.success && result.recipe.title) {
+        saveRecipeToDB(result.recipe);
+        setRecipe(result.recipe);
         
         toast({
-          title: "Recipes Generated",
-          description: `Created ${successfulRecipes.length} delicious ${restaurant?.cuisine || 'custom'} recipes`,
+          title: "Recipe Generated",
+          description: `Enjoy this ${restaurant?.cuisine || 'custom'} recipe!`
         });
       } else {
         toast({
           title: "Generation Failed",
-          description: "Failed to generate recipes. Please try with different ingredients.",
+          description: "Failed to generate a recipe. Please try again.",
           variant: "destructive"
         });
       }
@@ -107,19 +88,14 @@ const RecipeGenerator = () => {
             <ChefHat className="mr-2" /> Recipe Generator
           </CardTitle>
           <CardDescription>
-            Select ingredients from your inventory to generate custom recipes
+            Select ingredients from your inventory to generate a custom recipe
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium">Select Ingredients:</h3>
-              <Button 
-                onClick={selectAllIngredients}
-                variant="outline" 
-                size="sm"
-                className="border-primary/20 hover:bg-accent"
-              >
+              <Button onClick={selectAllIngredients} variant="outline" size="sm">
                 {selectedIngredients.length === ingredients.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
@@ -143,7 +119,7 @@ const RecipeGenerator = () => {
                     />
                     <label
                       htmlFor={`ingredient-${ingredient.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer capitalize"
+                      className="text-sm font-medium cursor-pointer capitalize"
                     >
                       {ingredient.name} ({ingredient.quantity})
                     </label>
@@ -155,32 +131,28 @@ const RecipeGenerator = () => {
         </CardContent>
         <CardFooter className="border-t bg-muted/50 p-4">
           <Button
-            onClick={handleGenerateRecipes}
+            onClick={handleGenerateRecipe}
             disabled={isGenerating || selectedIngredients.length === 0}
             className="w-full"
           >
             {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Recipes...
+                Generating Recipe...
               </>
             ) : (
-              'Generate Recipes'
+              'Generate Recipe'
             )}
           </Button>
         </CardFooter>
       </Card>
       
-      {recipes.length > 0 && (
+      {recipe && (
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-4 flex items-center">
-            <BookOpen className="mr-2" /> Generated Recipes
+            <BookOpen className="mr-2" /> Generated Recipe
           </h2>
-          <div className="space-y-6">
-            {recipes.map((recipe, index) => (
-              <RecipeCard key={index} recipe={recipe} />
-            ))}
-          </div>
+          <RecipeCard recipe={recipe} />
         </div>
       )}
     </>
